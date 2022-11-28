@@ -1,80 +1,126 @@
 const HttpError = require("../models/httpError");
- const { v4: uuidv4 }  = require('uuid')
- const { validationResult } = require("express-validator");
-const getCoordsForAddress  = require("../util/location");
-let DUMMY_DATA = [
-    {
-      id: "p1",
-      title: "Empire state Building",
-      description: "One of the most famous sky scrapers in the world!",
-      address: "New York,USA",
-      location: {
-        lat: 40.7484474,
-        lng: -74.9871516,
-      },
-      creator: "u1",
-    },
-  ];
-const getPlaceById = (req, res, next) => {
-    const placeId = req.params.pId;
-    const place = DUMMY_DATA.find((item) => item.id === placeId);
-    if (!place) {
-      throw new HttpError("Could not find a place for the provided id", 404);
-    }
-    res.json({ place });
+const { v4: uuidv4 } = require("uuid");
+const { validationResult } = require("express-validator");
+const getCoordsForAddress = require("../util/location");
+const Place = require("../models/place");
+
+const getPlaceById = async(req, res, next) => {
+  const placeId = req.params.pId;
+  let place;
+  try {
+     place = await Place.findById(placeId)
+     if(place){
+      res.json({ place:place.toObject({getters:true}) });
+     }else{
+      const err= new HttpError("Could not find a place for the provided id", 500);
+       return next(err);
+     }
+  } catch (error) {
+    const err= new HttpError("Could not find a place for the provided id", 500);
+   return next(err);
+  }
+  
+  // res.json({ place });
+  // res.json({ place:place.toObject({getters:true}) });
+};
+
+const getPlacesByUserId = async(req, res, next) => {
+  const userId = req.params.uId;
+  let places;
+  try {
+    places = await Place.find({creator:userId})
+    if(places){
+      res.json({ places :places.map(place =>place.toObject({getters:true})) });
+     }else{
+      const err= new HttpError("Could not find a place for the provided id", 500);
+      return next(err);
+     
+     }
+ } catch (error) {
+   const err= new HttpError("Could not find a place for the provided id", 500);
+  return next(err);
+ }
+
+};
+
+const createPlace = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError("Invalid inputs data", 422);
+  }
+  const { title, description, address, creator } = req.body;
+  const coordinates = getCoordsForAddress(address);
+  const createdPlace = new Place({
+    title,
+    description,
+    location: coordinates,
+    image: "https://pbs.twimg.com/media/E69JsVhVkAA2rSa?format=jpg&name=large",
+    address,
+    creator,
+  });
+  try {
+   const result =  await createdPlace.save();
+   if (result) {
+      res.status(201).json({message:"Data Create Successfully"})
+   }
+  } catch (error) {
+    const err = new HttpError("Creating place failed, place try again");
+    return next(err);
+  }
+};
+
+const updatePlace = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError("Invalid inputs data", 422);
+  }
+  const placeId = req.params.pId;
+  const { title, description } = req.body;
+
+  try {
+    let place = await Place.findById(placeId)
+     if(place){
+      place.title = title;
+      place.description = description;
+      try {
+       const result = await place.save();
+        if (result) {
+          res.status(201).json({place:result.toObject({getters:true})})
+       }
+      } catch (error) {
+        const err= new HttpError("Could not update data", 500);
+        return next(err);
+      }
+     }else{
+      const err= new HttpError("Could not find a place for the provided id", 500);
+       return next(err);
+     }
+  } catch (error) {
+    const err= new HttpError("Could not find a place for the provided id", 500);
+   return next(err);
   }
 
-  const getPlacesByUserId = (req, res, next) => {
-    const userId = req.params.uId;
-    const places = DUMMY_DATA.filter((item) => item.creator === userId);
-    if (!places) {
-      return next(new HttpError("Could not find a place for the provided id", 404))
-    }
-    res.json({ places });
-  }
+  
 
-  const createPlace = (req,res,next)=>{
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-       throw new HttpError("Invalid inputs data", 422)
+};
+const deletePlace =async (req, res, next) => {
+  const placeId = req.params.pId;
+  let place;
+ try {
+  place = await Place.findById(placeId)
+    try {
+     await place.remove()
+     res.status(200).json({ message: "Deleted Place" });
+    } catch (error) {
+      const err = new HttpError("Something wrong");
+       return next(err);
     }
-    const {title,description, address,creator} = req.body;
-    const coordinates = getCoordsForAddress(address);
-    const createdPlace ={
-        id:uuidv4(),
-        title,
-        description,
-        location:coordinates,
-        address,
-        creator
-    };
-    DUMMY_DATA.push(createdPlace)
-    res.status(201).json({place:DUMMY_DATA})
-  }
-
-  const updatePlace = (req,res,next)=>{
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-       throw new HttpError("Invalid inputs data", 422)
-    }
-    const placeId = req.params.pId;
-    const {title,description} = req.body;
-    const updatePlace = {...DUMMY_DATA.find((item) => item.id === placeId)};
-    const placeIndex = DUMMY_DATA.find(item=> item.id === placeId)
-    updatePlace.title = title;
-    updatePlace.description = description;
-    DUMMY_DATA[placeIndex] = updatePlace;
-    res.status(200).json({place:updatePlace})
-   
-  }
-  const deletePlace = (req,res,next)=>{
-    const placeId = req.params.pId;
-    if (!DUMMY_DATA.find(item => item.id ===placeId)) {
-        throw new HttpError("Could not find a place",404)
-    }
-    DUMMY_DATA = DUMMY_DATA.filter(item => item.id !==placeId);
-    res.status(200).json({message:"Deleted Place"})
-  }
+ } catch (error) {
+  const err = new HttpError("Something wrong");
+    return next(err);
+ }
+  
+};
 exports.getPlaceById = getPlaceById;
 exports.getPlacesByUserId = getPlacesByUserId;
 exports.createPlace = createPlace;
