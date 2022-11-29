@@ -22,8 +22,9 @@ const placeSchema = mongoose.Schema({
     lng: { type: Number, required: true },
   },
   creator: {
-    type: String,
+    type: mongoose.Types.ObjectId,
     required: true,
+    ref:'User'
   },
 });
 module.exports = mongoose.model("Place", placeSchema);
