@@ -2,6 +2,8 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 
 const placesRoute = require("./routes/placesRoute");
 const userRoute = require("./routes/usersRoute");
@@ -10,6 +12,8 @@ const HttpError = require("./models/httpError");
 const app = express();
 app.use(cors())
 app.use(bodyParser.json());
+
+app.use('/upload/images',express.static(path.join('upload', 'images')))
 
 // cors handle manually
 // app.use((req,res,next)=>{
@@ -28,6 +32,11 @@ app.use((req, res, next) => {
   throw error;
 });
 app.use((error, req, res, next) => {
+  if(req.file){
+    fs.unlink(req.file.path,(err)=>{
+      console.log(err);
+    });
+  }
   if (res.headerSend) {
     return next(error);
   }

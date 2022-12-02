@@ -5,7 +5,7 @@ const getCoordsForAddress = require("../util/location");
 const Place = require("../models/place");
 const User = require("../models/user");
 const mongoose  = require("mongoose");
-
+const fs =require('fs');
 
 const getPlaceById = async(req, res, next) => {
   const placeId = req.params.pId;
@@ -53,7 +53,7 @@ const createPlace = async (req, res, next) => {
     title,
     description,
     location: coordinates,
-    image: "https://pbs.twimg.com/media/E69JsVhVkAA2rSa?format=jpg&name=large",
+    image: req.file.path,
     address,
     creator,
   });
@@ -127,6 +127,7 @@ const deletePlace =async (req, res, next) => {
   let place;
  try {
   place = await Place.findById(placeId).populate('creator');
+  const imagePath = place.image;
    if (place) {
     try {
       const sess = await mongoose.startSession();
@@ -135,6 +136,10 @@ const deletePlace =async (req, res, next) => {
       place.creator.places.pull(place);
       await place.creator.save({session:sess});
       await sess.commitTransaction();
+      // delete image file 
+      fs.unlink(imagePath,err=>{
+        console.log(err);
+      });
       res.status(200).json({ message: "Deleted Place" });
      } catch (error) {
        const err = new HttpError("Something wrong");

@@ -1,9 +1,9 @@
 import React, { useContext, useState } from "react";
-import {  useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import Button from "../../utility/components/FormElement/Button";
 import Input from "../../utility/components/FormElement/Input";
-import LoadingSpinner from '../../utility/components/UIElements/LoadingSpinner'
-import ErrorModal from '../../utility/components/UIElements/ErrorModal'
+import LoadingSpinner from "../../utility/components/UIElements/LoadingSpinner";
+import ErrorModal from "../../utility/components/UIElements/ErrorModal";
 
 import {
   VALIDATOR_EMAIL,
@@ -14,15 +14,15 @@ import Card from "../../utility/components/UIElements/Card";
 import { AuthContext } from "../../utility/context/authContext";
 import { useForm } from "../../utility/hooks/form-hooks";
 import "./Auth.css";
+import ImageUpload from "../../utility/components/FormElement/ImageUpload";
 export default function Auth() {
   const navigate = useNavigate();
-  const auth = useContext(AuthContext)
+  const auth = useContext(AuthContext);
   const [isLoginMode, setIsLoginMode] = useState(true);
-  const [isLoading , setIsLoading] = useState(false);
-  const [error , setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
 
-
-  const [formState, inputHandler,setFormData] = useForm(
+  const [formState, inputHandler, setFormData] = useForm(
     {
       email: {
         value: "",
@@ -37,88 +37,92 @@ export default function Auth() {
   );
   const authSubmitHandler = async (e) => {
     e.preventDefault();
+    console.log(formState.inputs)
     setIsLoading(true);
     if (isLoginMode) {
       try {
-        const response = await  fetch('http://localhost:5000/api/users/login',{
-          method:"POST",
-          headers:{
-            'Content-type':"application/json"
+        const response = await fetch("http://localhost:5000/api/users/login", {
+          method: "POST",
+          headers: {
+            "Content-type": "application/json",
           },
-          body:JSON.stringify({
-            email:formState.inputs.email.value,
-            password:formState.inputs.password.value,
-          })
-        })
+          body: JSON.stringify({
+            email: formState.inputs.email.value,
+            password: formState.inputs.password.value,
+          }),
+        });
         const result = await response.json();
         // if(!result.ok){
         //   throw new Error(result.message)
         // }
-        navigate('/');
+        navigate("/");
         setIsLoading(false);
         auth.login(result.user.id);
       } catch (error) {
-        setIsLoading(false)
-        setError(error.message || "Something went wrong, please try again")
+        setIsLoading(false);
+        setError(error.message || "Something went wrong, please try again");
       }
     } else {
       try {
-        const response = await  fetch('http://localhost:5000/api/users/signup',{
-          method:"POST",
-          headers:{
-            'Content-type':"application/json"
-          },
-          body:JSON.stringify({
-            name:formState.inputs.name.value,
-            email:formState.inputs.email.value,
-            password:formState.inputs.password.value,
-          })
-        })
+        const formData = new FormData();
+        formData.append('name',formState.inputs.name.value )
+        formData.append('email',formState.inputs.email.value )
+        formData.append('password',formState.inputs.password.value )
+        formData.append('image',formState.inputs.image.value )
+        const response = await fetch("http://localhost:5000/api/users/signup", {
+          method: "POST",
+          body: formData
+        });
         const result = await response.json();
-        if(!result.ok){
-          throw new Error(result.message)
-        }
+        // if (!result.ok) {
+        //   throw new Error(result.message);
+        // }
         auth.login(result.user.id);
-        navigate('/');
-        setIsLoading(false)
+        navigate("/");
+        setIsLoading(false);
       } catch (error) {
-        setIsLoading(false)
-        setError(error.message || "Something went wrong, please try again")
+        setIsLoading(false);
+        setError(error.message || "Something went wrong, please try again");
       }
     }
-
-    
-  
-
   };
   const shitchModeHandler = () => {
     if (!isLoginMode) {
-      setFormData({
-        ...formState.inputs,
-        name:undefined
-      },
+      setFormData(
+        {
+          ...formState.inputs,
+          name: undefined,
+          image: undefined,
+        },
         formState.inputs.email.isValid && formState.inputs.password.isValid
-      )
-    }else{
-      setFormData({
-        ...formState.inputs,
-        name:{
-          value:'',
-          isValid:false
-        }
-      },false)
+      );
+    } else {
+      setFormData(
+        {
+          ...formState.inputs,
+          name: {
+            value: "",
+            isValid: false,
+          },
+          image:{
+            value:null,
+            isValid:false
+          }
+        },
+        false
+      );
     }
     setIsLoginMode((prevMode) => !prevMode);
   };
-  const errorHandler = ()=>{
+  const errorHandler = () => {
     setError(null);
-  }
+  };
 
   return (
     <div className="auth">
-      <ErrorModal error={error} onClear={errorHandler}/>
+      <ErrorModal error={error} onClear={errorHandler} />
       <Card className="authentication">
-        {isLoading && <LoadingSpinner asOverlay/>}
+        {isLoading && <LoadingSpinner asOverlay />}
         <h2>Login Required</h2>
         <hr />
         <form onSubmit={authSubmitHandler}>
@@ -132,6 +136,9 @@ export default function Auth() {
               errorText="Please enter a name"
               onInput={inputHandler}
             />
+          )}
+          {!isLoginMode && (
+            <ImageUpload center id="image" onInput={inputHandler} errorText="Please provide an image"/>
           )}
           <Input
             element="input"

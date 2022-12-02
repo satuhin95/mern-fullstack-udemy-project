@@ -11,6 +11,7 @@ import { AuthContext } from "../../utility/context/authContext";
 import ErrorModal from "../../utility/components/UIElements/ErrorModal";
 import LoadingSpinner from "../../utility/components/UIElements/LoadingSpinner";
 import { useNavigate } from "react-router-dom";
+import ImageUpload from "../../utility/components/FormElement/ImageUpload";
 
 export default function NewPlaces() {
   const navigate = useNavigate();
@@ -30,6 +31,10 @@ export default function NewPlaces() {
       value:' ',
       isValid:false
     },
+    image:{
+      value:'',
+      isValid:false,
+    }
   },
     false
   );
@@ -39,17 +44,15 @@ export default function NewPlaces() {
     e.preventDefault();
     setIsLoading(true)
     try {
+      const formData = new FormData();
+      formData.append('title',formState.inputs.title.value )
+      formData.append('description',formState.inputs.description.value )
+      formData.append('address',formState.inputs.address.value )
+      formData.append('creator',auth.userId )
+      formData.append('image',formState.inputs.image.value )
       const response = await  fetch('http://localhost:5000/api/places',{
         method:"POST",
-        headers:{
-          'Content-type':"application/json"
-        },
-        body:JSON.stringify({
-          title:formState.inputs.title.value,
-          description:formState.inputs.description.value,
-          address:formState.inputs.address.value,
-          creator:auth.userId
-        })
+        body:formData
       })
       const result = await response.json();
       // if(!result.ok){
@@ -98,6 +101,7 @@ export default function NewPlaces() {
           errorText="Please enter a valid Address!"
           onInput={inputHandler}
         />
+        <ImageUpload id="image" onInput={inputHandler} errorText="Please provide an image" />
         <Button type="submit" disabled={!formState.isValid}>
           Add Place
         </Button>

@@ -17,6 +17,7 @@ const getUsers = async (req,res,next)=>{
 const signup = async (req,res,next)=>{
     const errors = validationResult(req);
     if(!errors.isEmpty()){
+
        return next(new HttpError("Invalid inputs data", 422))
     }
     const {name,email,password} = req.body;
@@ -30,7 +31,7 @@ const signup = async (req,res,next)=>{
             const createUser = new User({
                 name,
                 email,
-                image:'https://www.pngkey.com/png/detail/230-2301779_best-classified-apps-default-user-profile.png',
+                image: req.file.path,
                 password,
                 places:[]
             })
