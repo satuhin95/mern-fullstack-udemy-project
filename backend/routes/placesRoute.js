@@ -8,13 +8,15 @@ const {
   deletePlace,
 } = require("../controllers/placesController");
 const fileUpload = require("../middleware/fileUpload");
-
+const checkAuth = require('../middleware/checkAuth')
 const router = express.Router();
 
 router.get("/:pId", getPlaceById);
 
 router.get("/user/:uId", getPlacesByUserId);
 
+
+router.use(checkAuth);
 router.post(
   "/",
   fileUpload.single('image'),

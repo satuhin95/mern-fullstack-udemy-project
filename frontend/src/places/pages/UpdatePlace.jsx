@@ -79,10 +79,12 @@ export default function UpdatePlace() {
     e.preventDefault();
     setIsLoading(true)
     try {
+      const bearer = 'Bearer ' + auth.token;
       const response = await  fetch(`http://localhost:5000/api/places/${placeId}`,{
         method:"PATCH",
         headers:{
-          'Content-type':"application/json"
+          'Content-type':"application/json",
+          'Authorization': bearer,
         },
         body:JSON.stringify({
           title:formState.inputs.title.value,

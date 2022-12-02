@@ -44,6 +44,7 @@ export default function NewPlaces() {
     e.preventDefault();
     setIsLoading(true)
     try {
+      const bearer = 'Bearer ' + auth.token;
       const formData = new FormData();
       formData.append('title',formState.inputs.title.value )
       formData.append('description',formState.inputs.description.value )
@@ -52,8 +53,13 @@ export default function NewPlaces() {
       formData.append('image',formState.inputs.image.value )
       const response = await  fetch('http://localhost:5000/api/places',{
         method:"POST",
-        body:formData
-      })
+        body:formData,
+        headers: {
+          'Authorization': bearer,
+      }
+      },
+      
+      )
       const result = await response.json();
       // if(!result.ok){
       //   throw new Error(result.message)
@@ -103,7 +109,7 @@ export default function NewPlaces() {
         />
         <ImageUpload id="image" onInput={inputHandler} errorText="Please provide an image" />
         <Button type="submit" disabled={!formState.isValid}>
-          Add Place
+          Add Place 
         </Button>
     </form>
   </>

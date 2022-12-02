@@ -37,7 +37,6 @@ export default function Auth() {
   );
   const authSubmitHandler = async (e) => {
     e.preventDefault();
-    console.log(formState.inputs)
     setIsLoading(true);
     if (isLoginMode) {
       try {
@@ -55,9 +54,14 @@ export default function Auth() {
         // if(!result.ok){
         //   throw new Error(result.message)
         // }
-        navigate("/");
-        setIsLoading(false);
-        auth.login(result.user.id);
+        if(result.userId){
+          setIsLoading(false);
+          auth.login(result.userId , result.token);
+          navigate("/");
+        }else{
+          throw new Error(result.message);
+        }
+        
       } catch (error) {
         setIsLoading(false);
         setError(error.message || "Something went wrong, please try again");
@@ -77,9 +81,14 @@ export default function Auth() {
         // if (!result.ok) {
         //   throw new Error(result.message);
         // }
-        auth.login(result.user.id);
-        navigate("/");
-        setIsLoading(false);
+        if(result.userId){
+          auth.login(result.userId , result.token);
+          navigate("/");
+          setIsLoading(false);
+        }else{
+          throw new Error(result.message);
+        }
+        
       } catch (error) {
         setIsLoading(false);
         setError(error.message || "Something went wrong, please try again");

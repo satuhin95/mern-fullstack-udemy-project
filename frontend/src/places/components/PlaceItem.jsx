@@ -9,10 +9,10 @@ import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../utility/components/UIElements/LoadingSpinner";
 import ErrorModal from "../../utility/components/UIElements/ErrorModal";
 export default function PlaceItem(props) {
-  const auth = useContext(AuthContext)
+  const auth = useContext(AuthContext);
   const navigate = useNavigate();
-  const [isLoading , setIsLoading] = useState(false);
-  const [error , setError] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [showMap, setShowMap] = useState(false);
   const [showConfModal, setShowConfModal] = useState(false);
   const openMapHandler = () => setShowMap(true);
@@ -24,24 +24,32 @@ export default function PlaceItem(props) {
   const cancelDeleteHandler = () => {
     setShowConfModal(false);
   };
-  const confirmDeleteHandler = async() => {
-    setShowConfModal(false)
+  const confirmDeleteHandler = async () => {
+    setShowConfModal(false);
     try {
-      const response = await  fetch(`http://localhost:5000/api/places/${props.id}`,{method:"DELETE" })
+      const bearer = 'Bearer ' + auth.token;
+      const response = await fetch(
+        `http://localhost:5000/api/places/${props.id}`,
+        { method: "DELETE",
+        headers:{
+          'Authorization': bearer,
+        },
+      }
+      );
       const result = await response.json();
       props.onDelete(props.id);
       // if(!result.ok){
       //   throw new Error(result.message)
       // }
 
-      navigate('/' + auth.userId + '/places');
+      navigate("/" + auth.userId + "/places");
     } catch (error) {
-      setError(error.message || "Something went wrong, please try again")
+      setError(error.message || "Something went wrong, please try again");
     }
   };
-  const errorHandler = ()=>{
+  const errorHandler = () => {
     setError(null);
-  }
+  };
   return (
     <>
       <ErrorModal error={error} onClear={errorHandler} />
@@ -64,8 +72,12 @@ export default function PlaceItem(props) {
         footerClass="place-item__modal-actions"
         footer={
           <>
-            <Button inverse onClick={cancelDeleteHandler}>Cancel</Button>
-            <Button danger onClick={confirmDeleteHandler}>Delete</Button>
+            <Button inverse onClick={cancelDeleteHandler}>
+              Cancel
+            </Button>
+            <Button danger onClick={confirmDeleteHandler}>
+              Delete
+            </Button>
           </>
         }
       >
@@ -75,7 +87,10 @@ export default function PlaceItem(props) {
         <Card className="place-item__content">
           {isLoading && <LoadingSpinner asOverlay />}
           <div className="place-item__image">
-            <img src={`http://localhost:5000/${props.image}`} alt={props.title} />
+            <img
+              src={`http://localhost:5000/${props.image}`}
+              alt={props.title}
+            />
           </div>
           <div className="place-item__info">
             <h2>{props.title}</h2>
@@ -84,14 +99,16 @@ export default function PlaceItem(props) {
           </div>
           <div className="place-item__actions">
             <Button inverse onClick={openMapHandler}>
-              View On Map 
+              View On Map
             </Button>
-            {auth.userId === props.creatorId &&
-            <>
-              <Button to={`/places/${props.id}`}>Edit</Button>
-            <Button danger onClick={showDeleteWarningHandler}>Delete</Button>
-            </>
-          }
+            {auth.userId === props.creatorId && (
+              <>
+                <Button to={`/places/${props.id}`}>Edit</Button>
+                <Button danger onClick={showDeleteWarningHandler}>
+                  Delete
+                </Button>
+              </>
+            )}
           </div>
         </Card>
       </li>
