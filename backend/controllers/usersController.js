@@ -37,7 +37,7 @@ const signup = async (req,res,next)=>{
             try {
                 const result = await createUser.save();
                 if (result) {
-                    res.status(201).json({user:result.toObject({getters:true})})
+                    res.status(200).json({user:result.toObject({getters:true})})
                 }else{
                 const err = new HttpError('SignUp faild',500);
                  return next(err);
@@ -66,7 +66,7 @@ const login = async(req,res,next)=>{
         if (!existingUser || existingUser.password !==password) {
             return next( new HttpError('Could not identify user',401));
         }
-        res.json({message:"User Logged in!"})
+        res.status(200).json({ user:existingUser.toObject({getters:true})})
     } catch (error) {
         const err = new HttpError('LogIn failed, please try again later',500);
        return next(err);

@@ -1,5 +1,5 @@
 import "./App.css";
-import { BrowserRouter, Routes, Route  } from "react-router-dom";
+import { BrowserRouter, Routes, Route   } from "react-router-dom";
 import Users from "./user/pages/Users";
 import NewPlaces from "./places/pages/NewPlaces";
 import MainNavigation from "./utility/components/Navigation/MainNavigation";
@@ -12,11 +12,14 @@ import { useCallback, useState } from "react";
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const login = useCallback(()=>{
-    setIsLoggedIn(true)
+  const [userId,setUserId] = useState(false);
+  const login = useCallback((uid)=>{
+    setIsLoggedIn(true);
+    setUserId(uid)
   })
   const logout = useCallback(()=>{
-    setIsLoggedIn(false)
+    setIsLoggedIn(false);
+    setUserId(null)
   })
   let routes;
   if (isLoggedIn) {
@@ -40,7 +43,7 @@ function App() {
     );
   }
   return (
-    <AuthContext.Provider value={{isLoggedIn:isLoggedIn,login:login,logout:logout}}>
+    <AuthContext.Provider value={{isLoggedIn:isLoggedIn, userId:userId,login:login,logout:logout}}>
     <BrowserRouter>
       <MainNavigation />
       <main>

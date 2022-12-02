@@ -1,7 +1,10 @@
 import React, { useContext, useState } from "react";
-import { redirect } from "react-router-dom";
+import {  useNavigate } from "react-router-dom";
 import Button from "../../utility/components/FormElement/Button";
 import Input from "../../utility/components/FormElement/Input";
+import LoadingSpinner from '../../utility/components/UIElements/LoadingSpinner'
+import ErrorModal from '../../utility/components/UIElements/ErrorModal'
+
 import {
   VALIDATOR_EMAIL,
   VALIDATOR_MIN,
@@ -12,8 +15,13 @@ import { AuthContext } from "../../utility/context/authContext";
 import { useForm } from "../../utility/hooks/form-hooks";
 import "./Auth.css";
 export default function Auth() {
+  const navigate = useNavigate();
   const auth = useContext(AuthContext)
   const [isLoginMode, setIsLoginMode] = useState(true);
+  const [isLoading , setIsLoading] = useState(false);
+  const [error , setError] = useState(false);
+
+
   const [formState, inputHandler,setFormData] = useForm(
     {
       email: {
@@ -27,10 +35,61 @@ export default function Auth() {
     },
     false
   );
-  const authSubmitHandler = (e) => {
+  const authSubmitHandler = async (e) => {
     e.preventDefault();
-    auth.login();
-    redirect('/');
+    setIsLoading(true);
+    if (isLoginMode) {
+      try {
+        const response = await  fetch('http://localhost:5000/api/users/login',{
+          method:"POST",
+          headers:{
+            'Content-type':"application/json"
+          },
+          body:JSON.stringify({
+            email:formState.inputs.email.value,
+            password:formState.inputs.password.value,
+          })
+        })
+        const result = await response.json();
+        // if(!result.ok){
+        //   throw new Error(result.message)
+        // }
+        navigate('/');
+        setIsLoading(false);
+        auth.login(result.user.id);
+      } catch (error) {
+        setIsLoading(false)
+        setError(error.message || "Something went wrong, please try again")
+      }
+    } else {
+      try {
+        const response = await  fetch('http://localhost:5000/api/users/signup',{
+          method:"POST",
+          headers:{
+            'Content-type':"application/json"
+          },
+          body:JSON.stringify({
+            name:formState.inputs.name.value,
+            email:formState.inputs.email.value,
+            password:formState.inputs.password.value,
+          })
+        })
+        const result = await response.json();
+        if(!result.ok){
+          throw new Error(result.message)
+        }
+        auth.login(result.user.id);
+        navigate('/');
+        setIsLoading(false)
+      } catch (error) {
+        setIsLoading(false)
+        setError(error.message || "Something went wrong, please try again")
+      }
+    }
+
+    
+  
+
   };
   const shitchModeHandler = () => {
     if (!isLoginMode) {
@@ -51,10 +110,15 @@ export default function Auth() {
     }
     setIsLoginMode((prevMode) => !prevMode);
   };
+  const errorHandler = ()=>{
+    setError(null);
+  }
 
   return (
     <div className="auth">
+      <ErrorModal error={error} onClear={errorHandler}/>
       <Card className="authentication">
+        {isLoading && <LoadingSpinner asOverlay/>}
         <h2>Login Required</h2>
         <hr />
         <form onSubmit={authSubmitHandler}>
@@ -83,8 +147,8 @@ export default function Auth() {
             id="password"
             type="password"
             label="Password"
-            validators={[VALIDATOR_MIN(5)]}
-            errorText="Plase enter a valid Password, at least 5 characters"
+            validators={[VALIDATOR_MIN(6)]}
+            errorText="Plase enter a valid Password, at least 6 characters"
             onInput={inputHandler}
           />
 

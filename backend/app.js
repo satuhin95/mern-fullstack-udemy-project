@@ -1,13 +1,25 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
+const cors = require('cors');
 
 const placesRoute = require("./routes/placesRoute");
 const userRoute = require("./routes/usersRoute");
 const HttpError = require("./models/httpError");
 
 const app = express();
+app.use(cors())
 app.use(bodyParser.json());
+
+// cors handle manually
+// app.use((req,res,next)=>{
+//   res.setHeader("Access-Control-Allow-Origin",'*');
+//   res.setHeader("Access-Control-Allow-Headers",'Origin, X-Requested-With, Content-Type,Accept, Authorization');
+//   res.setHeader('Access-Control-Allow-Method','GET, POST ,PATCH, DELETE');
+
+//   next();
+// })
+
 app.use("/api/places", placesRoute);
 app.use("/api/users", userRoute);
 
